@@ -13,9 +13,7 @@ def extract_am_tiet(input_file, output_file):
             parts = line.split("\t")
             word = parts[0].strip()
 
-            # Normalize hyphenated words: "a-đrê-na-lin" -> ["a", "đrê", "na", "lin"]
-            word_clean = word.replace("-", " ")
-            am_tiet_list = word_clean.split()
+            am_tiet_list = word.split()
 
             # Count each âm tiết
             counter.update(am_tiet_list)
@@ -25,6 +23,7 @@ def extract_am_tiet(input_file, output_file):
         for am_tiet, count in counter.most_common():
             f.write(f"{am_tiet}\t{count}\n")
 
-
+    print("Done!")
+    
 if __name__ == "__main__":
     extract_am_tiet("VDic_uni.txt", "output.txt")
