@@ -1,0 +1,19 @@
+===== REPORT =====
+Total lines (with tab) read: 37461
+Kept (syllables): 6661
+Skipped: 30800
+
+Breakdown:
+  blacklist      : 633
+  compound       : 433
+  no_vowel       : 77
+  rime_not_matched: 1247
+
+Examples:
+  rime_not_matched: ﻿a, posteriori, priori, acbit, accordeon, aceton, acetylen, acid, acid, acetic, acid, amin, acid, acid, carbonic, acid, chlorhydric, acid, nitric, acid, sulfuric, acmonica, acquy, acre, acten, ad, adrenalin, ađrenalin, afghani, Ag
+  kept: A, Di, Đà, Phật, dua, giao, ha, hoàn, pa, tít, thai, phiến, tòng, xít, à, ơi, uôm, ả, đào, đầu, á, hậu, khôi, kim, nguyên, nhiệt, đới, phiện, quân, sừng
+  compound: a-dốt, a-đrê-na-lin, a-lô, a-lu-min, a-men, a-mi-ăng, a-mi-đan, a-mi-nô, a-xít, a-míp, a-mô-ni-ác, a-nô-phen, a-nốt, a-tlát, a-trô-pin, a-xen, a-xê-ti-len, a-xê-ton, a-xít, a-min, a-xphan, a-xpi-rin, ác-bít, ác-quy, ác-ten, am-pe, am-pli, an-bom, an-bu-min, an-ca-lo-ít
+  blacklist: pác, quỉ, hoc, quịt, ty, rem, qui, hỷ, kỳ, kỳ, lý, lý, ký, qui, lý, ly, quít, boóng, ly, ly, lý, lý, ký, kỹ, mèng, mèng, thờn, ly, qui, quít
+  no_vowel: BCH, BCT, H, Br, BS, CC, CD, CHXHCN, Cl, CLB, cm, CN, CNTB, CNXH, Cr, CS, đ/c, pH, ĐT, GDP, GMT, GNP, gr, GS, HĐND, Hg, HT, HTX, Hz, KCS
+
+Result saved to: output/output_syllables.txt
