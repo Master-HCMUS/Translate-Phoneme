@@ -41,11 +41,16 @@ GK2/
    ```
    - Output: `output/groundtruth_not_in_vdic.txt`
 
+
+## Ground Truth Source & Explanation
+
+- The ground truth syllable list is sourced from [Dự án S - Âm tiết tiếng Việt](https://s.ngonngu.net/syllables/), which currently records **6,845** valid Vietnamese syllables (as of 2025).
+- In this toolkit, the script only keeps syllables that are present in both the ground truth and your `VDic_uni.txt` dictionary. For example, your report may show only **6,661** syllables kept, which is fewer than the ground truth. This is because the remaining syllables (e.g., 184 syllables) are not found in your `VDic_uni.txt` file.
+- The difference may be due to `VDic_uni.txt` being outdated or missing some newly added/rare syllables. You can update or expand this file to improve coverage.
+- Example of newly added syllables (not in old dictionaries): quềnh, nhày, ụn, nhệu, nhễu, oăng, ngổng, ướn, khuềnh, khoàng, ...
+
 ## Notes
 - All scripts assume UTF-8 encoding.
 - Adjust file paths in scripts if you change the folder structure.
 - `blacklist.txt` (optional) can be used to filter out unwanted syllables.
 - `rimes.txt` should contain all valid rimes (one per line, canonical form).
-
-## Contact
-For questions or contributions, please contact the project maintainer.
