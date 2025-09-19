@@ -48,7 +48,7 @@ class TestInitialAndCoda(unittest.TestCase):
     def test_parse_coda_multi(self):
         rest, ph = parse_coda("anh")
         self.assertEqual(rest, "a")
-        self.assertEqual(ph, ["/ɲ/"])
+        self.assertEqual(ph, ["/ŋ/"])
 
     def test_parse_coda_single(self):
         rest, ph = parse_coda("oc")

@@ -5,14 +5,14 @@ from typing import List, Dict, Tuple, Optional
 
 # =========================
 # 1) Cấu hình âm vị mặc định
+# Tham chiếu quy ước ký hiệu trong GK1/phonemes.md để thống nhất biểu diễn
 # =========================
 
 PHONEME_CHOICES = {
-    # Các phụ âm đầu có nhiều lựa chọn — lấy lựa chọn đầu tiên trong bảng bạn đưa
-    "kh": "/χ/",      # có thể đổi thành "/x/" hoặc "/kʰ/"
-    "th": "/tʰ/",     # có thể đổi thành "/t’/" (ở đây chọn /tʰ/)
-    "tr": "/ʈ/",      # có thể đổi thành "/ʈ͡ʂ/"
-    "ch": "/c/",      # có thể đổi thành "/t/" (cho âm đầu); với âm cuối 'ch' ta cũng dùng /c/
+    "kh": "/χ/",    
+    "th": "/tʼ/",  # theo phonemes.md
+    "tr": "/ʈ/",
+    "ch": "/c/",
     "d_or_gi": "/z/",
     "o_or_u_as_w": "/w/",
     "i_or_y_as_j": "/j/",
@@ -24,11 +24,12 @@ PHONEME_CHOICES = {
     "o_horn": "/ɤ/",    # ơ
     "u_horn": "/ɯ/",    # ư
     "a_breve": "/ă/",   # ă
-    "a_circ": "/ɤ̆/",   # â (chọn /ɤ̆/ thay vì /ə̆/)
-    "e_letter": "/ε/",
+    "a_circ": "/ɤ̈/",   # â (theo phonemes.md)
+    "e_letter": "/ɛ/",
     "e_hat": "/e/",
     "a_letter": "/a/",
-    # Diphthongs (chọn dạng đầu)
+    "a_letter_anh_ach": "/ɛ̈/",  # a trong ngữ cảnh anh/ách (row 11 phonemes.md)
+    # Nguyên âm đôi (chọn dạng đầu)
     "ie": "/ie/",       # hoặc /iə/
     "uo": "/uo/",       # hoặc /uə/
     "ɯɤ": "/ɯɤ/",      # hoặc /ɯə/ hoặc /ɨə/
@@ -71,9 +72,9 @@ INITIAL_SINGLE = {
 
 # Âm cuối (ưu tiên chuỗi 2 ký tự trước)
 CODA_MULTI = {
-    "nh": "/ɲ/",
+    "nh": "/ŋ/",  # theo phonemes.md, coda 'nh' hiện thực /-ŋ/
     "ng": "/ŋ/",
-    "ch": "/c/",
+    "ch": "/k/",  # theo phonemes.md, 'ch' ở coda hiện thực /-k/
 }
 CODA_SINGLE = {
     "c": "/k/",
@@ -83,7 +84,7 @@ CODA_SINGLE = {
     "t": "/t/",
 }
 
-# Diphthong (vần lõi)
+# Nguyên âm đôi
 DIPHTHONGS = {
     # iê ~ ia ~ yê
     "iê": PHONEME_CHOICES["ie"],
@@ -158,7 +159,7 @@ def detone_keep_quality(s: str) -> Tuple[str, str]:
 def parse_initial(s: str) -> Tuple[List[str], str]:
     """
     Tách âm đầu theo bảng. Trả về ([phonemes], rest_str).
-    VD: input "hoc" -> (["/h/", "oc"], "")
+    VD: input "hoc" -> (["/h/"], "oc")
     """
     s_lower = s.lower()
 
@@ -172,7 +173,8 @@ def parse_initial(s: str) -> Tuple[List[str], str]:
     if s_lower and s_lower[0] in INITIAL_SINGLE:
         return [INITIAL_SINGLE[s_lower[0]]], s[1:]
 
-    return [], s  # không có âm đầu
+    # Không có âm đầu phụ âm → thêm âm tắc thanh quản /ʔ/ (theo phonemes.md row 22)
+    return ["/ʔ/"], s
 
 def parse_coda(s: str) -> Tuple[str, List[str]]:
     """
@@ -197,15 +199,19 @@ def try_match_diphthong(core: str) -> Optional[str]:
             return DIPHTHONGS[pat]
     return None
 
-def parse_rhyme(core: str) -> List[str]:
+def parse_rhyme(core: str, coda_phonemes: List[str] = None) -> List[str]:
     """
     Phân tích vần (bán nguyên âm + nguyên âm đôi/đơn + bán nguyên âm).
     Quy tắc:
       - Ưu tiên 3 diphthong: iê/ia/yê; uô/ua; ươ/ưa.
       - Bán nguyên âm đầu: 'o'/'u' trước nguyên âm chính → /w/
       - Bán nguyên âm cuối: 'i'/'y' → /j/; 'o'/'u' → /w/
+      - Ngữ cảnh đặc biệt: 'a' + coda nh/ch → /ɛ̈/ (theo phonemes.md row 11)
       - Nếu không khớp đặc biệt: map từng nguyên âm đơn còn lại.
     """
+    if coda_phonemes is None:
+        coda_phonemes = []
+    
     phonemes: List[str] = []
     rest = core
 
@@ -219,34 +225,38 @@ def parse_rhyme(core: str) -> List[str]:
     if diph:
         phonemes.append(diph)
         rest = rest[2:] if len(rest) >= 2 else ""
-        # Trường hợp 'iê'/'yê' dài 2 ký tự, 'uô' cũng 2, 'ươ' cũng 2.
-        # Với 'ia'/'ua'/'ưa' cũng 2. (Nếu muốn an toàn tuyệt đối, có thể
-        # tính chính xác độ dài theo pattern, nhưng 2 là đủ ở đây.)
     else:
-        # Không phải diphthong: map nguyên âm đơn (có thể 1-2 ký tự do ê/ô/ơ/ư/â/ă)
+        # Không phải diphthong: map nguyên âm đơn
         if not rest:
             return phonemes
-        # Nếu còn ≥2 ký tự và ký tự đầu là nguyên âm hợp lệ (kể cả ê/ô/ơ/ư/â/ă)
-        # ta map ký tự đầu tiên là âm chính
-        ch0 = rest[0]
-        ph = MONO_VOWELS.get(ch0.lower())
-        if ph:
-            phonemes.append(ph)
+        
+        ch0 = rest[0].lower()
+        
+        # Xử lý ngữ cảnh đặc biệt: 'a' + coda nh/ch → /ɛ̈/ (phonemes.md row 11)
+        if ch0 == "a" and coda_phonemes and coda_phonemes[0] == "/ŋ/":  # coda nh → /ŋ/
+            phonemes.append(PHONEME_CHOICES["a_letter_anh_ach"])
+            rest = rest[1:]
+        elif ch0 == "a" and coda_phonemes and coda_phonemes[0] == "/k/":  # coda ch → /k/
+            phonemes.append(PHONEME_CHOICES["a_letter_anh_ach"])
             rest = rest[1:]
         else:
-            # Nếu gặp chữ không phải nguyên âm đơn hợp lệ (ví dụ trường hợp ngoại lệ),
-            # ta thử map từng ký tự nguyên âm có thể nhận diện, bỏ qua ký tự lạ.
-            consumed = False
-            for i, c in enumerate(rest):
-                ph_i = MONO_VOWELS.get(c.lower())
-                if ph_i:
-                    phonemes.append(ph_i)
-                    rest = rest[i+1:]
-                    consumed = True
-                    break
-            if not consumed:
-                # không tìm thấy nguyên âm → giữ nguyên (fallback)
-                rest = ""
+            # Map nguyên âm đơn thông thường
+            ph = MONO_VOWELS.get(ch0)
+            if ph:
+                phonemes.append(ph)
+                rest = rest[1:]
+            else:
+                # Fallback: tìm nguyên âm đầu tiên
+                consumed = False
+                for i, c in enumerate(rest):
+                    ph_i = MONO_VOWELS.get(c.lower())
+                    if ph_i:
+                        phonemes.append(ph_i)
+                        rest = rest[i+1:]
+                        consumed = True
+                        break
+                if not consumed:
+                    rest = ""
 
     # Bán nguyên âm cuối: ưu tiên i/y → /j/, sau đó o/u → /w/
     if rest:
@@ -264,7 +274,6 @@ def parse_rhyme(core: str) -> List[str]:
         ph = MONO_VOWELS.get(c.lower())
         if ph:
             phonemes.append(ph)
-        # Ký tự không nhận diện thì bỏ qua
         rest = rest[1:]
 
     return phonemes
@@ -288,8 +297,8 @@ def transcribe_syllable(syl: str) -> Dict[str, object]:
     # tách âm cuối
     core, coda_ph = parse_coda(rest1)
 
-    # vần
-    rhyme_ph = parse_rhyme(core)
+    # vần (với xử lý ngữ cảnh đặc biệt cho "a" trong anh/ách)
+    rhyme_ph = parse_rhyme(core, coda_ph)
 
     phonemes = onset_ph + rhyme_ph + coda_ph
     # lọc rỗng
@@ -357,6 +366,9 @@ if __name__ == "__main__":
         "khoa học dữ liệu",
         "nghiên cứu trí tuệ nhân tạo",
         "Quốc gia giàu đẹp!",
+        "ăn uống",
+        "anh ách",  # test case cho ngữ cảnh /ɛ̈/
+        "ăn năn",   # test case cho /ă/
         "học, hành; chăm-chỉ.",
         "Alexander Rhodes"
     ]
